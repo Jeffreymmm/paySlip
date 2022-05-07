@@ -1,39 +1,47 @@
-import { Upload, message } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
+import React, { useState, useRef, useEffect, Key } from 'react';
+import { Upload, Button, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons'
 import './App.css';
+import window from '../preload.js';
 
-const { Dragger } = Upload;
 
-const props = {
-  name: 'file',
-  multiple: true,
-  action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
-  onChange(info: any) {
-    const { status } = info.file;
-    if (status !== 'uploading') {
-      console.log(info.file, info.fileList);
-    }
-    if (status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully.`);
-    } else if (status === 'error') {
-      message.error(`${info.file.name} file upload failed.`);
-    }
-  },
-  onDrop(e: any) {
-    console.log('Dropped files', e.dataTransfer.files);
-  },
-};
+const App = () => {
+  const [fileList, setFileList] = useState<any>([]);
 
-export default () => (
-  <div style={{ display: 'flex', justifyContent:`center`, alignItems:`center`, width:'100vw',height:'100vh' }}>
-    <Dragger style={{ width: '800px', height:`400px`}} {...props}>
-      <p className="ant-upload-drag-icon">
-        <InboxOutlined />
-      </p>
-      <p className="ant-upload-text">点击或上传拖拽文件</p>
-      <p className="ant-upload-hint">
-        支持单个或批量上传，支持excel文件类型
-      </p>
-    </Dragger>
-  </div>
-);
+  const handleChange = (info: any) => {
+    console.log(info);
+
+    let fileList = [...info.fileList];
+
+    // 1. Limit the number of uploaded files
+    // Only to show two recent uploaded files, and old ones will be replaced by the new
+    fileList = fileList.slice(-2);
+
+    // 2. Read from response and show file link
+    fileList = fileList.map(file => {
+      if (file.response) {
+        // Component will show file.url as link
+        file.url = file.response.url;
+      }
+      return file;
+    });
+
+  };
+
+
+  const props = {
+    action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
+    onChange: handleChange,
+    multiple: true,
+  };
+
+  return (
+    <div style={{ display: 'flex', justifyContent: `center`, alignItems: `center`, width: '100vw', height: '100vh' }}>
+      <Button onClick={() => {
+        window.ipcRenderer.send('select-file-dialog')
+      }} icon={<UploadOutlined />}>Upload</Button>
+    </div>
+  );
+}
+export default App;
+
